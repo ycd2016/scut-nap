@@ -1,0 +1,100 @@
+#!/bin/sh /etc/rc.common
+START=99
+STOP=15
+USE_PROCD=1
+SCUT_PATH=/usr/bin/scut
+SCUT_CONFIG=scut
+EXTRA_COMMANDS="logoff"
+EXTRA_HELP=<<EOF
+	logoff	Log off manually
+EOF
+scut_validate_drcom() {
+	uci_validate_section scut drcom "${1}" \
+		'dns:ip4addr:202.38.193.33' \
+		'hostname:string:DESKTOP-85IF0N5' \
+		'server_auth_ip:ip4addr:202.38.210.131' \
+		'version:string:4472434f4d0096022a' \
+		'onlinehook:string' \
+		'offlinehook:string' \
+		'nettime:string' \
+		'hash:string:2ec15ad258aee9604b18f2f8114da38db16efd00' || exit 1
+}
+scut_validate_scut() {
+	uci_validate_section scut scut "${1}" \
+		'username:string' \
+		'password:string' \
+		'interface:string:wan6' || exit 1
+}
+scut_validate_option() {
+	uci_validate_section scut option "${1}" \
+		'enable:bool:0' \
+		'debug:bool:0' || exit 1
+}
+scut_load_config() {
+	config_load scut
+	config_foreach scut_validate_option option
+	config_foreach scut_validate_drcom drcom
+}
+scut_start_instance() {
+	local cfg="$1"
+	local username password interface ifname
+	scut_validate_scut "$cfg"
+	uci_validate_section network interface "$interface" 'ifname:string'
+	procd_open_instance "scut_${cfg}_${interface}"
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+	procd_set_param netdev $ifname
+	procd_set_param command "$SCUT_PATH"
+	procd_append_param command --username "$username" \
+		--password "$password" \
+		--iface "$ifname" \
+		--dns "$dns" \
+		--hostname "$hostname" \
+		--udp-server "$server_auth_ip" \
+		--cli-version "$version" \
+		--hash "$hash"
+	[ "$debug" -ge 1 ] && procd_append_param command --debug
+	[ -n "$onlinehook" ] && procd_append_param command --online-hook "$onlinehook"
+	[ -n "$offlinehook" ] && procd_append_param command --offline-hook "$offlinehook"
+	[ -n "$nettime" ] && procd_append_param command --net-time "$nettime"
+	procd_close_instance
+}
+scut_add_triggers() {
+	local cfg="$1"
+	local username password interface
+	scut_validate_scut "$cfg"
+	procd_add_interface_trigger "interface.*" $interface /etc/init.d/scut restart
+}
+scut_logoff() {
+	local cfg="$1"
+	local username password interface ifname
+	scut_validate_scut "$cfg"
+	uci_validate_section network interface "$interface" 'ifname:string'
+	$SCUT_PATH --iface $ifname --logoff
+}
+service_triggers() {
+	local enable debug
+	config_load scut
+	config_foreach scut_validate_option option
+	config_foreach scut_add_triggers scut
+	procd_add_interface_trigger "interface.*" wan6 /etc/init.d/scut restart
+	procd_add_reload_trigger "dhcp"
+	procd_add_reload_trigger "$SCUT_CONFIG"
+	procd_open_validate
+	scut_validate_option
+	scut_validate_scut
+	scut_validate_drcom
+	procd_close_validate
+}
+start_service() {
+	local dns hostname server_auth_ip version hash username password enable debug ifname authexe nettime
+	scut_load_config
+	[ $enable -eq 0 ] && exit
+	config_foreach scut_start_instance scut
+}
+reload_service() {
+	restart
+}
+boot() {
+	return
+}

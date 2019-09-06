@@ -1,0 +1,13 @@
+#!/bin/sh
+uci -q batch <<-EOF >/dev/null
+	delete ucitrack.@scut[-1]
+	add ucitrack scut
+	set ucitrack.@scut[-1].init=scut
+	commit ucitrack
+	delete scut.@luci[-1]
+	add scut luci
+	commit scut
+EOF
+rm -f /tmp/luci-indexcache
+/etc/init.d/scut enable
+exit 0

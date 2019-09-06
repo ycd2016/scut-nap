@@ -1,0 +1,13 @@
+#!/bin/sh
+chmod +644 /etc/config/scut
+chmod +644 /etc/hotplug.d/iface/99-scut
+chmod +755 /etc/init.d/scut
+chmod +644 /etc/uci-defaults/99-luci-scut
+chmod +777 /usr/bin/scut
+chmod +644 /usr/lib/lua/luci/controller/scut.lua
+chmod +644 /usr/lib/lua/luci/model/cbi/scut/scut.lua
+chmod +644 /usr/lib/lua/luci/view/scut/about.htm
+chmod +644 /usr/lib/lua/luci/view/scut/logs.htm
+chmod +644 /usr/lib/lua/luci/view/scut/status.htm
+rm /License /privilege /Readme.md
+exit
