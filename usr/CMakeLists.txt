@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 2.4)
+project(scut C)
+ADD_DEFINITIONS(-Ofast -Os -Wall)
+add_executable(scut src/auth.c src/drcom.c src/functions.c src/info.c src/main.c src/md5.c src/tracelog.c)
+install(TARGETS scut RUNTIME DESTINATION bin)

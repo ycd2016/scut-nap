@@ -9,5 +9,6 @@ chmod +644 /usr/lib/lua/luci/model/cbi/scut/scut.lua
 chmod +644 /usr/lib/lua/luci/view/scut/about.htm
 chmod +644 /usr/lib/lua/luci/view/scut/logs.htm
 chmod +644 /usr/lib/lua/luci/view/scut/status.htm
-rm /License /privilege /Readme.md
+rm -rf /usr/src
+rm /usr/CMakeLists.txt /License /privilege /Readme.md
 exit
